@@ -1,0 +1,361 @@
+body {
+	margin: 0;
+	background-color: rgb(78,87,122);
+	color: white;
+	font-family: Cervo, serif;
+}
+
+/* General table format */
+table {
+	background-color: #5a6575;
+	border-collapse: collapse;
+	table-layout: fixed;
+	margin: 2%;
+}
+
+.bordered {
+	border: 1vh solid #3d4654;
+}
+
+thead {
+	width: 98%;
+	border: 1vh solid #3d4654;
+	border-left: 0;
+	border-top: 0;
+	margin: 0;
+	padding-left: 2%;
+}
+
+thead h1 {
+	margin: 0;
+	padding: 2%;
+	font-size: 2vw;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+
+tbody tr {
+	padding: 2% 0 2% 2%;
+	margin: 0;
+}
+tbody tr:not([class='bordered']):hover {
+	background-color: #2d343d;
+	cursor: pointer;
+}
+
+table td {
+	padding: 0.1% 0 0.1% 2%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis:
+	max-width: 90%;
+}
+
+tbody a, tbody input[type="text"] {
+	display: inline-block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 90%;
+	font-size: 1.5vw;
+	padding-left: 2%;
+}
+
+.icons {
+	float: right;
+	cursor: pointer;
+	padding: 2% 4% 2% 0;
+	white-space: nowrap;
+	font-size: 1vw;
+}
+
+.icons i {
+	font-size: 2vw;
+}
+
+.icons .selected {
+	color: #3399ff;;
+}
+
+#top, #bottom {
+	display: flex;
+	flex-flow: row;
+	width: 100%;
+}
+/* Browser Content */
+#fileBox {
+	width: 50%;
+	float:left;
+	flex: 0 1 auto;
+}
+
+#fileBox thead td:last-child {
+	width: 38%;
+	padding-left: 0;
+}
+
+
+/* Upload Box */
+#uploadBox {
+	float: left;
+	flex: 1 1 auto;
+}
+
+#uploadBox thead td:last-child {
+	width: 20%;
+}
+
+#uploadBox a {
+	cursor: pointer;
+}
+
+#uploadBox tbody td:last-child div {
+	float: right;
+}
+
+
+/* Media Box */
+#mediaBox {
+	float: left;
+	width: 60%;
+	flex: 0 1 auto;
+	margin-right: 0;
+}
+
+#mediaBox thead td:last-child {
+	width: 18%;
+}
+#mediaBox tr:hover {
+	background-color: inherit;
+}
+#mediaBox tbody td:first-child {
+	padding: 0;
+}
+#mediaBox img, #mediaBox video {
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+}
+#mediaBox img:focus, #mediaBox video:focus {
+	outline: none;
+}
+#mediaBox tr:hover {
+	cursor: initial;
+}
+
+/* Video Player */
+.player {
+	position: relative;
+	width: 100%;
+}
+
+.controls {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	height: 5vh;
+	width: 100%;
+	display: flex;
+}
+.controls > * {
+	float:left;
+	font-size: 1vw;
+}
+
+.controls > *:not(a) {
+	opacity: 0.7;
+	-webkit-transition: .2s;
+	transition: opacity .2s;
+	cursor: pointer;
+}
+.controls > *:not(a):hover {
+	opacity: 1; /* Fully shown on mouse-over */
+}
+.controls > *:first-child {
+	margin-left:0;
+}
+
+.controls[data-state=hidden] {
+	display:none;
+}
+
+.controls[data-state=visible] {
+	display:block;
+}
+
+.controls input[type=range] {
+	-webkit-appearance: none;
+	border-radius: 8vh;  
+	background: #4D4D4D;
+	outline: none;
+	height: 40%;
+}
+.controls input[type=range]::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 3vh;
+	height: 3vh;
+	border-radius: 50%; 
+	background: #DEDEDE;
+	cursor: pointer;
+}
+
+.controls input[type=range]::-moz-range-thumb {
+	width: 3vh;
+	height: 3vh;
+	border-radius: 50%;
+	background: #DEDEDE;
+	cursor: pointer;
+}
+
+.controls input::-webkit-outer-spin-button,input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+.controls input[type=number] {
+	width: 3vw;
+	-moz-appearance: textfield;
+}
+
+.controls {
+	z-index:2147483647;
+}
+video::-webkit-media-controls-enclosure {
+	display:none !important;
+}
+
+/* Playlist Box */
+#playlistBox {
+	width: 40%;
+	margin-left: 0;
+	float: left;
+}
+
+#playlistBox thead td:last-child {
+	width: 23%;
+}
+
+#playlistBox tr.selected {
+	background-color: #2d343d;
+}
+/* Tooltips */
+.icons * {
+	position: relative;
+	display: inline-block;
+	float: left;
+}
+
+.tooltiptext {
+	width: fit-content;
+}
+.tooltip .tooltiptext {
+	visibility: hidden;
+	width: 120px;
+	background-color: black;
+	color: #fff;
+	text-align: center;
+	border-radius: 6px;
+	padding: 5px 0;
+
+	/* Position the tooltip */
+	position: absolute;
+	z-index: 1;
+	top: 150%;
+	left: 50%;
+	margin-left: -60px;
+}
+
+.tooltip .tooltiptext::after {
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	width: fit-content
+	margin-left: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: transparent transparent black transparent;
+}
+		
+.tooltip:hover .tooltiptext {
+	visibility: visible;
+}
+
+/* Animations */
+#fileBox tbody, #mediaBox, #searchBox, #uploadBox tbody {
+	-webkit-animation: fadein 0.8s; /* Safari, Chrome and Opera > 12.1 */
+	-moz-animation: fadein 0.8s; /* Firefox < 16 */
+	-ms-animation: fadein 0.8s; /* Internet Explorer */
+	-o-animation: fadein 0.8s; /* Opera < 12.1 */
+	animation: fadein 0.8s;
+}
+@keyframes fadein {
+from { opacity: 0; }
+to   { opacity: 1; }
+}
+
+/* Firefox < 16 */
+@-moz-keyframes fadein {
+from { opacity: 0; }
+to   { opacity: 1; }
+}
+
+/* Safari, Chrome and Opera > 12.1 */
+@-webkit-keyframes fadein {
+from { opacity: 0; }
+to   { opacity: 1; }
+}
+
+/* Internet Explorer */
+@-ms-keyframes fadein {
+from { opacity: 0; }
+to   { opacity: 1; }
+}
+
+/* Opera < 12.1 */
+@-o-keyframes fadein {
+from { opacity: 0; }
+to   { opacity: 1; }
+}
+
+/* Icons */
+@font-face {
+	font-family: 'Material Icons';
+	font-style: normal;
+	font-weight: 400;
+	src: url(/source/icons/googleicons.eot); /* For IE6-8 */
+	src: local('Material Icons'),
+		local('MaterialIcons-Regular'),
+		url(/source/icons/googleicons.woff2) format('woff2'),
+		url(/source/icons/googleicons.woff) format('woff'),
+		url(/source/icons/googleicons.ttf) format('truetype');
+}
+
+.material-icons {
+	font-family: 'Material Icons';
+	font-weight: normal;
+	font-style: normal;
+	font-size: 24px;  /* Preferred icon size */
+	display: inline-block;
+	line-height: 1;
+	text-transform: none;
+	letter-spacing: normal;
+	word-wrap: normal;
+	white-space: nowrap;
+	direction: ltr;
+
+	/* Support for all WebKit browsers. */
+	-webkit-font-smoothing: antialiased;
+	/* Support for Safari and Chrome. */
+	text-rendering: optimizeLegibility;
+
+	/* Support for Firefox. */
+	-moz-osx-font-smoothing: grayscale;
+
+	/* Support for IE. */
+	font-feature-settings: 'liga';
+}
+
+
+

@@ -1,0 +1,95 @@
+<html>
+	<head>
+		<title>File Server</title>
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<link rel="apple-touch-icon" sizes="180x180" href="/source/images/apple-touch-icon.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="/source/images/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/source/images/favicon-16x16.png">
+	</head>
+	<body>
+		<div id="top"></div>
+		<div id="bottom"></div>
+		
+		</div>
+		<button is='google-cast-button' id="cast" style="display: none"></button>
+	
+		<script src="source/js/FileInfo.js"></script>
+		<script src="source/js/FileBox.js"></script>
+		<script src="source/js/UploadBox.js"></script>
+		<script src="source/js/MediaBox.js"></script>
+		<script src="source/js/PlaylistBox.js"></script>
+		<script src="source/js/util.js"></script>
+		<script src='https://richtr.github.io/NoSleep.js/dist/NoSleep.min.js'></script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.3/jsmediatags.min.js'></script>
+		<script src='https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1'></script>
+		<script>
+			window.onload = async () => {
+				document.nosleep = new NoSleep(); // To prevent page from going to sleep
+
+				// Check for cookies
+				await FileBox.spawn(getCookie("FileBox")); // Spawn with cookie or fall back to "/files/"
+				
+				if (getCookie("MediaBox")) {
+					if (parseInt(getCookie("MediaBox"))) {
+						await MediaBox.spawn('', getCookie("MediaBox")); 
+					} else {
+						await MediaBox.spawn(new FileInfo(getCookie("MediaBox")));
+					}
+				}
+
+				if (getCookie("PlaylistBox")) {
+					await PlaylistBox.add(getCookie("PlaylistBox").split(';').map((url) => new FileInfo(url)));
+					if (getCookie("PlaylistBox_playing")) {
+						PlaylistBox.play(PlaylistBox.files[parseInt(getCookie("PlaylistBox_playing"))]);
+					}
+				}
+			}
+			
+			async function fetchPage(url, selection = null) { // Run GET on URL, return HTML as DOM
+				return fetch(url).then(response => {
+					return response.text();
+				}).then(html => {
+					// Convert the HTML string into a document object
+					let parser = new DOMParser;
+					let dom = parser.parseFromString(html, 'text/html');
+					if (selection) {
+						return dom.querySelector(selection);
+					}
+					return dom;
+				}).catch(err => {
+					alert(err);
+				});
+			}
+
+			window.__onGCastApiAvailable = function(isAvailable){ // ChromeCast API
+				if(! isAvailable){
+				    return false;
+				}
+
+				var castContext = cast.framework.CastContext.getInstance();
+				castContext.setOptions({
+					autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+					receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID
+				});
+
+				var stateChanged = cast.framework.CastContextEventType.CAST_STATE_CHANGED;
+				castContext.addEventListener(stateChanged, function(event){
+					if (!document.querySelector("#mediaBox tbody td > *")) {
+						return;
+					}
+					
+					var castSession = castContext.getCurrentSession();
+					var media = new chrome.cast.media.MediaInfo(
+						MediaBox.file.castURL,
+						MediaBox.file.type
+					);
+
+					media.streamType = "BUFFERED";
+					var request = new chrome.cast.media.LoadRequest(media);
+
+					castSession && castSession.loadMedia(request);
+				});
+			};
+		</script>
+	</body>
+</html>

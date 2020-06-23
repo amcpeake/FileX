@@ -1,0 +1,106 @@
+<html>
+	<head>
+
+	</head>
+	<body>
+		<div id="mediaBox">
+				
+		</div>
+		<button id="url">Change url</button>
+		<!--<button id="play">PLAY</button>
+		<button id="pause">PAUSE</button>-->
+		<button>Click first</button>
+		<script src="source/js/util.js"></script>
+		<script src="source/js/render.js"></script>
+		<script>
+			// On load, query the backend for the latest state (GET vs POST)
+			var STATE = {};
+			window.onload = async function() {
+				// Send GET to sync.php which returns URL to load in
+				let doc = getTemplate(`
+					<video controls autoplay name="media">
+						<source type="audio/mpeg">
+					</video>
+				`);
+				
+				let video = doc.querySelector("video");
+				video.addEventListener("play", async function() {
+					await update({playing: true, url: this.currentSrc.replace(window.location.origin, ''), time: this.currentTime});
+				});
+				video.addEventListener("pause", async function() {
+					await update({playing: false, url: this.currentSrc.replace(window.location.origin, ''), time: this.currentTime});
+				});
+				/*video.addEventListener("waiting", async function() {
+					console.log("waiting");
+					await update({playing: false, url: this.currentSrc, time: this.currentTime});
+				});
+				video.addEventListener("seeked", async function() { // Seeking
+					console.log("seeked");
+					await update({playing: !this.paused, url: this.currentSrc, time: this.currentTime});
+				});*/
+
+
+				/*document.querySelector("#play").addEventListener("click", async function() {
+					let video = document.querySelector("video");
+					await update({playing: true, url: video.currentSrc, time: video.currentTime});
+					video.play();
+				});
+				document.querySelector("#pause").addEventListener("click", async function() {
+					let video = document.querySelector("video");
+					await update({playing: false, url: video.currentSrc, time: video.currentTime});
+					video.pause();
+				});*/
+				
+				document.querySelector("#url").addEventListener("click", async function() {
+					await update({playing: false, url: prompt("URL:"), time: 0});
+				});
+				document.querySelector("#mediaBox").appendChild(doc);
+				let initResp = await sendRequest("GET", "source/php/sync.php", null, {}, (response) => response.json());
+				updatePlayer(initResp);
+				systemLoop();
+			}
+
+			async function systemLoop() {
+				console.log(STATE);
+				while (true) {
+					console.log("loop");
+					let resp = await sendRequest('POST', 'source/php/sync.php', JSON.stringify({state: STATE['state'], update: false}), {}, (response) => response.json());
+					updatePlayer(resp);
+				}
+			}
+
+			async function updatePlayer(resp) {
+				console.log("UPDATE");
+				let video = document.querySelector('video');
+				console.log(resp);
+				if (video.currentSrc.replace(window.location.origin, '') != resp['state']['url']) {
+					video.setAttribute("src", resp['state']['url']);
+				}
+				
+				if (resp['state']['playing']) {
+					video.currentTime = resp['state']['time'] + await getOffset(resp['timestamp']);
+					video.play();
+				} else {
+					video.currentTime = resp['state']['time'];
+					video.pause();
+				}
+				
+				STATE = resp;
+			}
+
+			async function update(body) {
+				await sendRequest('POST', 'source/php/sync.php', JSON.stringify({state: body, update: true}), {}, (response) => response.json());
+			}
+
+			async function getOffset(timestamp) {
+				let tTime = Date.now(); // Attempt to account for transmission time
+				let curTime = await sendRequest('GET', 'source/php/getTime.php', null, {}, (response) => response.text());
+				tTime = Date.now() - tTime;
+				tTime /= 2;
+				return ((parseFloat(curTime) + tTime) - timestamp) / 1000;
+			}
+			
+			// Need a core while loop, always keep the fing running
+		</script>
+	</body>
+</html>
