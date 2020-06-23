@@ -10,16 +10,13 @@ Web based file browser/simulcast client written in JS + PHP
 3. For chromecast (optional):
 
 Chromecast will only stream files with the following headers, therefore you must manually set them on all files in the `/files/` directory:
-
+```
 Access-Control-Allow-Origin: "\*"
-
 Access-Control-Allow-Methods: "GET,PUT,POST,DELETE"
-
 Access-Control-Allow-Headers: "Content-Type"
-
 Access-Control-Expose-Headers: "origin, range"
-
 Cache-Control "public, max-age=3600"
+```
 
 The main page must also be loaded via HTTPS for Chromecast functionality to work
 
@@ -27,7 +24,8 @@ The main page must also be loaded via HTTPS for Chromecast functionality to work
 
 The simulcast feature uses MySQL to store session data, therefore you must first edit `/source/php/connect.php` with the connection parameters of your MySQL server and create a table using the following queries:
 
-```CREATE TABLE `simulcast` (
+```
+CREATE TABLE `simulcast` (
   `channel` int NOT NULL,
   `url` varchar(1000) DEFAULT NULL,
   `playtime` double NOT NULL,
@@ -39,5 +37,6 @@ The simulcast feature uses MySQL to store session data, therefore you must first
 
 ALTER TABLE `simulcast`
   ADD PRIMARY KEY (`channel`);
-COMMIT;```
+COMMIT;
+```
   
