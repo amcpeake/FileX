@@ -33,7 +33,7 @@ class FileBox {
 		}
 		
 		let box = null;
-		if (sendRequest(url, {method: 'HEAD'})) { // Validate URL first (i.e. cookie points to deleted directory);
+		if (await sendRequest(url, {method: 'HEAD'})) { // Validate URL first (i.e. cookie points to deleted directory);
 			box = new FileBox(url);
 		} else {
 			box = new FileBox('/files/');
@@ -271,19 +271,17 @@ class FileBox {
 						<h1 title="${this.prettyURL}">${this.prettyURL}</h1>
 					</td>
 					<td class="bordered">
-						<div class="icons">
+						<span class="icons">
 							<i title="Open simulcast" class="material-icons" data-action="simulcast">leak_add</i>
 							<i title="Refresh directory" class="material-icons" data-action="refresh">refresh</i>
 							<i title="Play from URL" class="material-icons" data-action="play">play_circle_outline</i>
 							<i title="Add folder" class="material-icons" data-action="addfolder">create_new_folder</i>
-							<div>
-								<input type="file" id="fileupload" style="display: none" multiple>
-								<i title="Upload file(s)" class="material-icons" data-action="uploadfile">file_upload</i>
-							</div>
+							<input type="file" id="fileupload" style="display: none" multiple>
+							<i title="Upload file(s)" class="material-icons" data-action="uploadfile">file_upload</i>
 							<i title="Search" class="material-icons" data-action="search">search</i>
 							<i title="Download from URL" class="material-icons" data-action="download">file_download</i>
 							<i class="material-icons" data-action="info">info_outline</i>
-						</div>
+						</span>
 					</td>
 				</tr>
 			</thead>
@@ -302,17 +300,15 @@ class FileBox {
 				<a title="${file.filename}">${file.filename}</a>
 			</td>
 			<td>
-				<div class="icons">
+				<span class="icons">
 					<i title="Delete file" class="material-icons" data-action="delete">delete</i>
 					<i title="Add to playlist" class="material-icons" data-action="playlist">queue</i>
 					<i title="Copy URL" class="material-icons" data-action="copy">content_copy</i>
 					<i title="Move file" class="material-icons" data-action="rename">edit</i>
-					<div>
-						<i title="Download file" class="material-icons" data-action="download">file_download</i>
-						<a style="display: none" download="${file.filename}" href="${file.url}"></a>
-					</div>
+					<i title="Download file" class="material-icons" data-action="download">file_download</i>
+					<a style="display: none" download="${file.filename}" href="${file.url}"></a>
 					<i class="material-icons" data-action="info">info_outline</i>
-				</div>
+				</span>
 			</td>
 		</tr>
 		`;

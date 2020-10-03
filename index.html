@@ -25,6 +25,24 @@
 		<script>
 			window.onload = async () => {
 				document.nosleep = new NoSleep(); // To prevent page from going to sleep
+				
+				// Misc Global Event Listeners
+				document.addEventListener("fullscreenchange", () => {
+					if (isFullscreen()) {
+						document.querySelector("video").style.height = '100%';
+						screen.orientation.lock("landscape");
+					} else {
+						document.querySelector("video").style.height = '';
+						screen.orientation.unlock();
+					}
+				});
+
+				window.addEventListener("beforeunload", (e) => {
+					e.preventDefault();
+					if (MediaBox.element && MediaBox.element.querySelector("video")) {
+						setCookie("MediaBoxTime", MediaBox.element.querySelector("video").currentTime);
+					}
+				});
 
 				// Check for cookies
 				await FileBox.spawn(getCookie("FileBox")); // Spawn with cookie or fall back to "/files/"
@@ -34,7 +52,11 @@
 						await MediaBox.spawn('', getCookie("MediaBox")); 
 					} else {
 						await MediaBox.spawn(new FileInfo(getCookie("MediaBox")));
+						if (getCookie("MediaBoxTime")) {
+							MediaBox.element.querySelector("video").currentTime = getCookie("MediaBoxTime");
+						}
 					}
+
 				}
 
 				if (getCookie("PlaylistBox")) {

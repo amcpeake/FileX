@@ -26,7 +26,6 @@ class MediaBox {
 		MediaBox.current = box;
 
 		if (box.simulcast) {
-			setCookie("MediaBox", box.simulcast);
 			if (!!window.EventSource) {
 				box.sse = new EventSource(`/source/php/sync.php?channel=${box.simulcast}`);
 				box.sse.addEventListener("update", function(e) {
@@ -34,8 +33,6 @@ class MediaBox {
 				});
 			}
 
-		} else if (box.file) {
-			setCookie("MediaBox", box.file.url);
 		}
 	}
 	
@@ -46,10 +43,12 @@ class MediaBox {
 					body: {timestamp: await getTime(), url: file.url, playtime: 0, playing: false, 
 					speed: 1, channel: MediaBox.simulcast}});
 				MediaBox.refresh();
+				setCookie("MediaBox", box.simulcast);
 			} else {
 				MediaBox.file = file;
 				MediaBox.element.querySelector("video").setAttribute("src", file.url);
 				MediaBox.element.querySelector("video").play();
+				setCookie("MediaBox", box.file.url);
 			}
 		} else {
 			await MediaBox.spawn(file);
@@ -71,6 +70,7 @@ class MediaBox {
 		}
 		delete MediaBox.current;
 		removeCookie("MediaBox");
+		removeCookie("MediaBoxTime");
 	}
 
 	static async sync(response) { // Sync player to video state
@@ -97,7 +97,6 @@ class MediaBox {
 
 		if ('playing' in response) {
 			if (response['playing']) {
-				console.log(video.currentTime);
 				video.play();
 			} else {
 				video.pause();
@@ -108,6 +107,7 @@ class MediaBox {
 	static kbshortcut(e) { // Must be globally defined to allow window.removeEventListener()
 		if (MediaBox.element.querySelector("i[data-action='play']") && 
 			(e.which == 75 || e.which == 32 || e.keyCode == 179 || e.keyCode == 107 || e.keyCode == 32 || e.key == 75 || e.key == 32)) {
+			e.preventDefault();
 			e.stopPropagation();
 			MediaBox.element.querySelector("i[data-action='play']").click();
 		}
@@ -198,12 +198,12 @@ class MediaBox {
 	
 	async populatePlayer(render) {
 		let controls = render.querySelector(".controls");
+		let playControls = render.querySelector("#playControls");
 		let video = render.querySelector("video");
-
+		let timeDisplay = render.querySelector("a");
 		// Video events should alter the controls (to support simulcast)
 		video.addEventListener("loadedmetadata", async function() {
-			let a = controls.querySelector("a");
-			a.innerText = secsToString(0, this.duration);
+			timeDisplay.innerText = secsToString(0, this.duration);
 			
 			let tags = await MediaBox.file.getTags();
 			if (tags && tags.picture) {
@@ -215,16 +215,17 @@ class MediaBox {
 
 		video.addEventListener("play", function() {
 			controls.querySelector("i[data-action='play']").innerText = "pause";
+			setCookie("MediaBoxTime", this.currentTime);
 		});
 
 		video.addEventListener("pause", function() {
 			controls.querySelector("i[data-action='play']").innerText = "play_arrow";
+			setCookie("MediaBoxTime", this.currentTime);
 		});
 
 		video.addEventListener("timeupdate", function() {
 			if (this.currentTime && this.duration) {
-				let a = controls.querySelector("a");
-				a.innerText = secsToString(this.currentTime, this.duration);
+				timeDisplay.innerText = secsToString(this.currentTime, this.duration);
 
 				controls.querySelector("input[data-action='playback']").value = (100 / this.duration) * this.currentTime;
 			}
@@ -244,22 +245,32 @@ class MediaBox {
 
 		video.addEventListener("ratechange", function() {
 			controls.querySelector("input[data-action='speed']").value = this.playbackRate;
+			controls.querySelector("label[for='speed']").innerText = `${this.playbackRate}x`;
 		});
 		
-		let timeout = window.setTimeout(function() {
+		let hideControls = function() {
 			if (!video.paused && isFullscreen()) {
 				controls.dataset.state = "hidden";
 			}
-		}, 5000);
+		}
+		let timeout = window.setTimeout(hideControls, 5000);
+
+		video.parentNode.addEventListener("touchstart", function() {
+			if (isFullscreen()) {
+				if (controls.dataset.state == "visible") {
+					controls.dataset.state = "hidden";
+				} else {
+					controls.dataset.state = "visible";
+					window.clearTimeout(timeout);
+					timeout = window.setTimeout(hideControls, 5000);
+				}
+			}
+		});
 
 		video.parentNode.addEventListener("mousemove", function() {
 			controls.dataset.state = "visible";
 			window.clearTimeout(timeout);
-			timeout = window.setTimeout(function() {
-				if (!video.paused && isFullscreen()) {
-					controls.dataset.state = "hidden";
-				}
-			}, 5000);
+			timeout = window.setTimeout(hideControls, 5000);
 		});
 		
 		video.addEventListener("ended", function() {
@@ -270,6 +281,7 @@ class MediaBox {
 
 		// Prevent/override default events
 		video.addEventListener("keyup", function(e) {
+			e.preventDefault();
 			e.stopPropagation();
 		});
 		
@@ -277,7 +289,7 @@ class MediaBox {
 		window.addEventListener("keydown", MediaBox.kbshortcut, true);
 
 		video.addEventListener("click", function(e) {
-			e.stopPropagation();
+			e.preventDefault();
 			controls.querySelector("i[data-action='play']").click();
 		});
 		video.addEventListener("dblclick", function() {
@@ -295,7 +307,6 @@ class MediaBox {
 
 		// Play
 		controls.querySelector("i[data-action='play']").addEventListener("click", function() {
-			console.log("clicked play");
 			if (video.paused) {
 				video.play();	
 			} else {
@@ -310,7 +321,7 @@ class MediaBox {
 
 		// Seek
 		controls.querySelector("input[data-action='playback']").addEventListener("input", function() {
-			let a = controls.querySelector("a");
+			let a = document.querySelector("a");
 			a.innerText = secsToString(video.currentTime, video.duration);
 			video.currentTime = video.duration * (this.value / 100);
 			
@@ -361,12 +372,12 @@ class MediaBox {
 		});
 		
 		// Cast
-		render.querySelector("i[data-action='cast']").addEventListener("click", () => {
+		controls.querySelector("i[data-action='cast']").addEventListener("click", () => {
 			document.querySelector("#cast").click();
 		});
 		
 		// Fullscreen
-		render.querySelector("i[data-action='fullscreen']").addEventListener("click", function() {
+		controls.querySelector("i[data-action='fullscreen']").addEventListener("click", function() {
 			if (isFullscreen()) {	
 				if (document.exitFullscreen) document.exitFullscreen();
 				else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
@@ -391,10 +402,10 @@ class MediaBox {
 						<h1 title="${await this.file.path}">${this.file.path}</h1>
 					</td>
 					<td class="bordered">
-						<div class="icons">
+						<span class="icons">
 							<i title="NoSleep toggle" class="material-icons" data-action="nosleep">snooze</i>
 							<i title="Close" class="material-icons" data-action="close">close</i>
-						</div>
+						</span>
 					</td>
 				</tr>
 			</thead>
@@ -418,13 +429,13 @@ class MediaBox {
 						<h1 title="Cast ${this.simulcast}">Cast ${this.simulcast}</h1>
 					</td>
 					<td class="bordered">
-						<div class="icons">
+						<span class="icons">
 							<i data-action="change" class="material-icons">add_to_queue</i>
 							<i data-action="channel" class="material-icons">filter_${this.simulcast}</i>
 							<i title="Resync" class="material-icons" data-action="refresh">sync</i>
 							<i title="NoSleep toggle" class="material-icons" data-action="nosleep">snooze</i>
 							<i title="Close" class="material-icons" data-action="close">close</i>
-						</div>
+						</span>
 					</td>
 				</tr>
 			</thead>
@@ -473,19 +484,33 @@ class MediaBox {
 	renderControls() {
 		return `
 		<div class="controls">
-			<i title="Previous song" class="material-icons" data-action="prev">skip_previous</i>
-			<i title="Play/Pause (k)" class="material-icons" data-action="play">play_arrow</i>
-			<i title="Next song" class="material-icons" data-action="next">skip_next</i>
-			<a>0:00/0:00</a>
-			<input type="range" value="0" data-action="playback">
-			<i class="material-icons" data-action="mute">volume_up</i>
-			<input type="range" min="0" max="1" step="0.1" value="1" data-action="volume">
-			<input type="number" min="0" max="20" step="any" data-action="speed" value="1">
-			<i class="material-icons" data-action="addsubs">subtitles</i>
-			<i class="material-icons" data-action="cast">cast</i>
-			<i class="material-icons" data-action="fullscreen">fullscreen</i>
-			<i title="Slow down" class="material-icons" data-action="slow">fast_rewind</i>
-			<i title="Speed up" class="material-icons" data-action="fast">fast_forward</i>
+			<span id="volumeControls">
+				<i class="material-icons" data-action="mute">volume_up</i>
+				<input type="range" min="0" max="1" step="0.1" value="1" data-action="volume">
+			</span>
+
+			<span id="extraControls">
+				<i class="material-icons" data-action="addsubs">subtitles</i>
+				<i class="material-icons" data-action="cast">cast</i>
+				<i title="Slow down" class="material-icons" data-action="slow">fast_rewind</i>
+				<input type="range" min="0" max="20" step="0.1" data-action="speed" value="1">
+				<i title="Speed up" class="material-icons" data-action="fast">fast_forward</i>
+				<br>
+				<label for="speed">1x</label>
+			</span>
+
+			<span id="playControls">
+				<i title="Previous song" class="material-icons" data-action="prev">skip_previous</i>
+				<i title="Play/Pause (k)" class="material-icons" data-action="play">play_arrow</i>
+				<i title="Next song" class="material-icons" data-action="next">skip_next</i>
+			</span>
+
+			<span id="timeControls">
+				<a>0:00/0:00</a>
+				<i class="material-icons" data-action="fullscreen">fullscreen</i>
+				<br>
+				<input type="range" value="0" data-action="playback">
+			</span>
 		</div>
 		`;
 
