@@ -20,7 +20,10 @@ async function sendRequest(url, {method = 'GET', body = null, headers = {}, call
 		headers: headers,
 		body: body
 	}).then(callback)
-	.catch(err => console.log(err));
+	.catch(err => {
+		console.log(err);
+		return false;
+	});
 }
 
 function setCookie(name, value, expires = "") {
@@ -80,6 +83,12 @@ async function getTags(url) {
 				resolve(null);
 			}
 		});
+	});
+}
+
+function addEventListeners(element, listeners, callback) {
+	listeners.forEach((listener) => {
+		element.addEventListener(listener, callback);
 	});
 }
 
